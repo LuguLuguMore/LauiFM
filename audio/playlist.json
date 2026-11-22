@@ -1,0 +1,33 @@
+{
+  "station": "LAUI FM 104.8 • Radio VeloTopia",
+  "tracks": [
+    {
+      "title": "AUD-20260128-WA0000",
+      "url": "./audio/track_01.mp3"
+    },
+    {
+      "title": "AUD-20260203-WA0001",
+      "url": "./audio/track_02.mp3"
+    },
+    {
+      "title": "AUD-20260204-WA0000",
+      "url": "./audio/track_03.mp3"
+    },
+    {
+      "title": "AUD-20260207-WA0005",
+      "url": "./audio/track_04.mp3"
+    },
+    {
+      "title": "AUD-20260214-WA0001",
+      "url": "./audio/track_05.mp3"
+    },
+    {
+      "title": "AUD-20260220-WA0002",
+      "url": "./audio/track_06.mp3"
+    },
+    {
+      "title": "Gil & friends AUD-20260129-WA0000",
+      "url": "./audio/track_07.mp3"
+    }
+  ]
+}

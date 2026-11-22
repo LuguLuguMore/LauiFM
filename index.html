@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>LAUI FM 104.8 • VeloTopia V3 AR &amp; Tour-Sternschnuppe</title>
+  <link rel="icon" type="image/png" href="./assets/favicon.png" />
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: rgba(11, 17, 32, 0.86);
+      --border: rgba(148, 163, 184, 0.28);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --yellow: #f2f476;
+      --sky: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: radial-gradient(circle at 50% 25%, #172542 0%, var(--bg) 72%);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    canvas { position: fixed; inset: 0; z-index: 1; display: block; }
+
+    /* Tour-de-France slanted top banner */
+    #topbar {
+      position: fixed; top: 10px; left: 10px; right: 10px; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      pointer-events: none;
+    }
+    .tdf-banner {
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 6px 12px 6px 8px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+    }
+    .tdf-crest {
+      height: 36px; width: auto; background: #fff; border-radius: 7px; padding: 2px 4px;
+    }
+    .tdf-tag {
+      background: var(--yellow); color: #0f172a; font-weight: 900; font-size: 11px;
+      letter-spacing: 0.7px; padding: 3px 8px; border-radius: 4px;
+      transform: skewX(-10deg); display: inline-block;
+    }
+    .tdf-tag span { display: inline-block; transform: skewX(10deg); }
+    .tdf-title { font-size: 13px; font-weight: 800; color: #fff; margin-top: 2px; }
+    .tdf-sub { font-size: 11px; color: var(--muted); }
+
+    .top-actions {
+      pointer-events: auto;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    button, .link-btn {
+      cursor: pointer; border: 1px solid var(--border);
+      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: var(--text); padding: 8px 12px; border-radius: 10px;
+      font-size: 12px; font-weight: 800; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 5px;
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    button:hover, .link-btn:hover { filter: brightness(1.15); }
+    button:active { transform: scale(0.96); }
+    #btn-radio.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #052e16; border-color: #4ade80;
+    }
+    #btn-ar {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+    }
+
+    /* Live Telemetry Strip */
+    #telem-bar {
+      position: fixed; top: 68px; left: 10px; z-index: 28;
+      display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none;
+    }
+    .t-pill {
+      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 5px 10px; min-width: 72px;
+    }
+    .t-lbl { font-size: 9.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .t-val { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 1px; }
+
+    /* Bottom Controls & Watt Legend */
+    #bottombar {
+      position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 30;
+      display: flex; flex-direction: column; gap: 7px; pointer-events: none;
+    }
+    .bottom-row {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    }
+    .ctrl-card {
+      pointer-events: auto;
+      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .ctrl-card.full { width: 100%; justify-content: space-between; }
+    .scrub-wrap { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 8px; }
+    input[type="range"] { width: 100%; accent-color: var(--yellow); cursor: pointer; }
+    .speed-btn { padding: 5px 8px; font-size: 11px; border-radius: 7px; }
+    .speed-btn.active { background: var(--yellow); color: #0f172a; border-color: var(--yellow); }
+
+    .watt-legend {
+      pointer-events: auto;
+      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 10px; font-size: 10px;
+    }
+    .watt-bar {
+      width: 170px; height: 7px; border-radius: 99px; margin: 4px 0 3px;
+      background: linear-gradient(90deg, #60a5fa, #38bdf8, #4ade80, #f2f476, #fb923c, #f43f5e);
+    }
+    .watt-labels { display: flex; justify-content: space-between; color: var(--muted); font-weight: 700; }
+
+    #ar-status {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+      padding: 5px 10px; font-size: 11px; font-weight: 700; display: none;
+    }
+    #ar-status.found { border-color: #22c55e; color: #86efac; }
+    #loading-badge {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 40; background: var(--panel); border: 1px solid var(--yellow);
+      border-radius: 14px; padding: 14px 20px; font-size: 14px; font-weight: 800;
+      text-align: center;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex.js"></script>
+  <script src="./laui_fm.js"></script>
+</head>
+<body>
+  <div id="loading-badge">🏝️ Lade VeloTopia V3 &amp; Tour-Strecke...</div>
+
+  <div id="topbar">
+    <div class="tdf-banner">
+      <img class="tdf-crest" src="./assets/logo_crest.png" alt="LAUI 26" />
+      <div>
+        <div class="tdf-tag"><span>PARCOURS • VELOTOPIA V3 • 22.4 KM</span></div>
+        <div class="tdf-title" id="radio-track">LAUI FM 104.8 bereit — tippe zum Starten</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
+      <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
+      <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
+      <button id="btn-ar" type="button">📱 AR starten</button>
+    </div>
+  </div>
+
+  <div id="telem-bar">
+    <div class="t-pill"><div class="t-lbl">Leistung</div><div class="t-val" id="val-watt" style="color:#f2f476;">0 W</div></div>
+    <div class="t-pill"><div class="t-lbl">Tempo</div><div class="t-val" id="val-spd" style="color:#38bdf8;">0.0 km/h</div></div>
+    <div class="t-pill"><div class="t-lbl">Puls</div><div class="t-val" id="val-hr" style="color:#fb7185;">-- bpm</div></div>
+    <div class="t-pill"><div class="t-lbl">Höhe</div><div class="t-val" id="val-alt" style="color:#8bd486;">4 m</div></div>
+    <div class="t-pill"><div class="t-lbl">Distanz</div><div class="t-val" id="val-dist">0.00 km</div></div>
+  </div>
+
+  <div id="bottombar">
+    <div class="bottom-row">
+      <div class="watt-legend">
+        <div style="font-weight:800;">✨ Sternschnuppen-Farbe = Watt-Zone</div>
+        <div class="watt-bar"></div>
+        <div class="watt-labels"><span>&lt;130W</span><span>180W</span><span>240W</span><span>300W+</span></div>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+        <div id="ar-status">Auf HIRO-Marker richten...</div>
+        <div id="ar-size-box" class="ctrl-card" style="display:none; padding:5px 10px;">
+          <span style="font-size:11px; font-weight:700; color:var(--muted);">AR-Größe</span>
+          <input id="ar-size-slider" type="range" min="0.8" max="4.0" step="0.1" value="1.8" style="width:90px;" />
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-card full">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button id="btn-play" type="button" style="padding:6px 11px;">⏸ Pause</button>
+        <button class="speed-btn" data-spd="10" type="button">10×</button>
+        <button class="speed-btn active" data-spd="30" type="button">30×</button>
+        <button class="speed-btn" data-spd="60" type="button">60×</button>
+      </div>
+      <div class="scrub-wrap">
+        <input id="scrub-slider" type="range" min="0" max="1000" value="0" />
+        <span id="time-label" style="font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; min-width:86px; text-align:right;">00:00 / 61:29</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // Watt -> Tour-de-France / Coggan RGB color
+      function wattToColor(w) {
+        const stops = [
+          [90,  0x60 / 255, 0xa5 / 255, 0xfa / 255],  // Z1 Blue
+          [150, 0x38 / 255, 0xbd / 255, 0xf8 / 255],  // Z2 Sky Cyan
+          [195, 0x4a / 255, 0xde / 255, 0x80 / 255],  // Z3 Mint Green
+          [235, 0xf2 / 255, 0xf4 / 255, 0x76 / 255],  // Z4 TdF Citron Yellow
+          [275, 0xfb / 255, 0x92 / 255, 0x3c / 255],  // Z5 Amber Orange
+          [330, 0xf4 / 255, 0x3f / 255, 0x5e / 255],  // Z6+ Coral Red
+        ];
+        if (w <= stops[0][0]) return [stops[0][1], stops[0][2], stops[0][3]];
+        for (let i = 0; i < stops.length - 1; i++) {
+          const a = stops[i], b = stops[i + 1];
+          if (w <= b[0]) {
+            const t = (w - a[0]) / (b[0] - a[0]);
+            return [
+              a[1] + (b[1] - a[1]) * t,
+              a[2] + (b[2] - a[2]) * t,
+              a[3] + (b[3] - a[3]) * t,
+            ];
+          }
+        }
+        const last = stops[stops.length - 1];
+        return [last[1], last[2], last[3]];
+      }
+
+      function rgbCss(rgb) {
+        return `rgb(${Math.round(rgb[0] * 255)}, ${Math.round(rgb[1] * 255)}, ${Math.round(rgb[2] * 255)})`;
+      }
+
+      // Radial glow sprite texture
+      function makeGlowTexture() {
+        const c = document.createElement('canvas');
+        c.width = 128; c.height = 128;
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+        g.addColorStop(0.0, 'rgba(255,255,255,1.0)');
+        g.addColorStop(0.22, 'rgba(255,255,255,0.88)');
+        g.addColorStop(0.55, 'rgba(255,255,255,0.28)');
+        g.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(c);
+      }
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.01, 100);
+      camera.position.set(1.55, 1.35, 1.85);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      document.body.appendChild(renderer.domElement);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.target.set(0, 0.08, 0);
+      controls.update();
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+      const sun = new THREE.DirectionalLight(0xfffbeb, 1.1);
+      sun.position.set(3, 5, 4);
+      scene.add(sun);
+
+      // Root container for VeloTopia island + route + shooting star
+      const ISLAND_SCALE = 0.0018;
+      const worldGroup = new THREE.Group();
+      worldGroup.scale.setScalar(ISLAND_SCALE);
+      scene.add(worldGroup);
+
+      // Ride & Shooting Star state
+      let ridePoints = []; // [t, x, y, z, w, hr, cad, spd, dist]
+      let totalDuration = 3689;
+      let simTime = 0;
+      let playing = true;
+      let speedMult = 30;
+
+      const TAIL_STEPS = 88;
+      const tailPos = new Float32Array((TAIL_STEPS + 1) * 2 * 3);
+      const tailCol = new Float32Array((TAIL_STEPS + 1) * 2 * 3);
+      const tailIndices = [];
+      for (let i = 0; i < TAIL_STEPS; i++) {
+        const a = i * 2, b = a + 1, c = a + 2, d = a + 3;
+        tailIndices.push(a, b, c, b, d, c);
+      }
+      const tailGeo = new THREE.BufferGeometry();
+      tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3));
+      tailGeo.setAttribute('color', new THREE.BufferAttribute(tailCol, 3));
+      tailGeo.setIndex(tailIndices);
+      const tailMat = new THREE.MeshBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+      const tailMesh = new THREE.Mesh(tailGeo, tailMat);
+      tailMesh.frustumCulled = false;
+      worldGroup.add(tailMesh);
+
+      const starHeadGroup = new THREE.Group();
+      const headCore = new THREE.Mesh(
+        new THREE.SphereGeometry(5.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      const headSpriteMat = new THREE.SpriteMaterial({
+        map: makeGlowTexture(),
+        color: 0xf2f476,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const headSprite = new THREE.Sprite(headSpriteMat);
+      headSprite.scale.set(54, 54, 1);
+      const headLight = new THREE.PointLight(0xf2f476, 1.8, 0.55);
+      starHeadGroup.add(headCore, headSprite, headLight);
+      worldGroup.add(starHeadGroup);
+
+      // Load VeloTopia GLB (Draco) & Real Ride JSON
+      const dracoLoader = new THREE.DRACOLoader();
+      dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/libs/draco/gltf/');
+      const gltfLoader = new THREE.GLTFLoader();
+      gltfLoader.setDRACOLoader(dracoLoader);
+
+      let islandLoaded = false;
+      let rideLoaded = false;
+      function checkReady() {
+        if (islandLoaded && rideLoaded) {
+          document.getElementById('loading-badge').style.display = 'none';
+        }
+      }
+
+      gltfLoader.load(
+        './models/fantasy_island.glb',
+        (gltf) => {
+          gltf.scene.traverse((ch) => {
+            if (ch.isMesh && ch.material) {
+              const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+              mats.forEach((m) => { m.side = THREE.DoubleSide; });
+            }
+          });
+          worldGroup.add(gltf.scene);
+          islandLoaded = true;
+          checkReady();
+        },
+        undefined,
+        (err) => {
+          console.error('GLB load error:', err);
+          document.getElementById('loading-badge').textContent = 'Fehler beim Laden von fantasy_island.glb';
+        }
+      );
+
+      fetch('./data/velotopia_ride.json')
+        .then((r) => r.json())
+        .then((data) => {
+          ridePoints = data.points || [];
+          totalDuration = (data.meta && data.meta.duration_sec) || (ridePoints.length ? ridePoints[ridePoints.length - 1][0] : 3600);
+
+          // Dim full-course preview line
+          const lineArr = new Float32Array(ridePoints.length * 3);
+          for (let i = 0; i < ridePoints.length; i++) {
+            lineArr[i * 3] = ridePoints[i][1];
+            lineArr[i * 3 + 1] = ridePoints[i][2] + 2.5;
+            lineArr[i * 3 + 2] = ridePoints[i][3];
+          }
+          const lineGeo = new THREE.BufferGeometry();
+          lineGeo.setAttribute('position', new THREE.BufferAttribute(lineArr, 3));
+          const baseLine = new THREE.Line(
+            lineGeo,
+            new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.28 })
+          );
+          worldGroup.add(baseLine);
+
+          rideLoaded = true;
+          checkReady();
+        });
+
+      function sampleAtTime(tSec) {
+        if (!ridePoints.length) return null;
+        if (tSec <= ridePoints[0][0]) return { idx: 0, pt: ridePoints[0] };
+        const last = ridePoints.length - 1;
+        if (tSec >= ridePoints[last][0]) return { idx: last, pt: ridePoints[last] };
+
+        let lo = 0, hi = last;
+        while (lo + 1 < hi) {
+          const mid = (lo + hi) >> 1;
+          if (ridePoints[mid][0] <= tSec) lo = mid;
+          else hi = mid;
+        }
+        const a = ridePoints[lo], b = ridePoints[hi];
+        const f = Math.max(0, Math.min(1, (tSec - a[0]) / Math.max(0.01, b[0] - a[0])));
+        const pt = [
+          tSec,
+          a[1] + (b[1] - a[1]) * f,
+          a[2] + (b[2] - a[2]) * f,
+          a[3] + (b[3] - a[3]) * f,
+          Math.round(a[4] + (b[4] - a[4]) * f),
+          Math.round(a[5] + (b[5] - a[5]) * f),
+          Math.round(a[6] + (b[6] - a[6]) * f),
+          a[7] + (b[7] - a[7]) * f,
+          a[8] + (b[8] - a[8]) * f,
+        ];
+        return { idx: lo + f, pt };
+      }
+
+      function fmtMMSS(sec) {
+        const s = Math.max(0, Math.floor(sec));
+        return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+      }
+
+      function updateShootingStar(tSec) {
+        const cur = sampleAtTime(tSec);
+        if (!cur) return;
+        const pt = cur.pt;
+        const headCol = wattToColor(pt[4]);
+
+        starHeadGroup.position.set(pt[1], pt[2] + 5.0, pt[3]);
+        headSpriteMat.color.setRGB(headCol[0], headCol[1], headCol[2]);
+        headLight.color.setRGB(headCol[0], headCol[1], headCol[2]);
+
+        // Update HUD
+        const wEl = document.getElementById('val-watt');
+        wEl.textContent = `${pt[4]} W`;
+        wEl.style.color = rgbCss(headCol);
+        document.getElementById('val-spd').textContent = `${pt[7].toFixed(1)} km/h`;
+        document.getElementById('val-hr').textContent = pt[5] > 0 ? `${pt[5]} bpm` : '-- bpm';
+        document.getElementById('val-alt').textContent = `${Math.round(pt[2])} m`;
+        document.getElementById('val-dist').textContent = `${pt[8].toFixed(2)} km`;
+        document.getElementById('time-label').textContent = `${fmtMMSS(tSec)} / ${fmtMMSS(totalDuration)}`;
+        document.getElementById('scrub-slider').value = Math.round((tSec / Math.max(1, totalDuration)) * 1000);
+
+        // Update comet ribbon tail (last ~240 seconds of ride behind head)
+        const tailSpanSec = Math.min(240, Math.max(40, totalDuration * 0.08));
+        for (let k = 0; k <= TAIL_STEPS; k++) {
+          const frac = k / TAIL_STEPS; // 0 = head, 1 = tail end
+          const tk = Math.max(0, tSec - frac * tailSpanSec);
+          const s = sampleAtTime(tk).pt;
+          const tkNext = Math.max(0, tk - 1.5);
+          const sNext = sampleAtTime(tkNext).pt;
+
+          let dx = s[1] - sNext[1];
+          let dz = s[3] - sNext[3];
+          const len = Math.hypot(dx, dz) || 1;
+          dx /= len; dz /= len;
+          // Perpendicular in XZ plane
+          const px = -dz;
+          const pz = dx;
+          const halfW = (1.0 - frac * 0.92) * 8.5;
+          const yLift = s[2] + 3.8;
+
+          const vIdx = k * 2 * 3;
+          tailPos[vIdx]     = s[1] + px * halfW;
+          tailPos[vIdx + 1] = yLift;
+          tailPos[vIdx + 2] = s[3] + pz * halfW;
+          tailPos[vIdx + 3] = s[1] - px * halfW;
+          tailPos[vIdx + 4] = yLift;
+          tailPos[vIdx + 5] = s[3] - pz * halfW;
+
+          const c = wattToColor(s[4]);
+          const glow = Math.pow(1.0 - frac, 1.45);
+          // White-hot boost right near the head
+          const hot = Math.max(0, 1.0 - frac * 6.0) * 0.45;
+          const r = Math.min(1, (c[0] + hot) * glow);
+          const g = Math.min(1, (c[1] + hot) * glow);
+          const b = Math.min(1, (c[2] + hot) * glow);
+          tailCol[vIdx] = tailCol[vIdx + 3] = r;
+          tailCol[vIdx + 1] = tailCol[vIdx + 4] = g;
+          tailCol[vIdx + 2] = tailCol[vIdx + 5] = b;
+        }
+        tailGeo.attributes.position.needsUpdate = true;
+        tailGeo.attributes.color.needsUpdate = true;
+      }
+
+      // AR.js (HIRO Marker) Mode
+      let arActive = false;
+      let arSize = 1.8;
+      let arToolkitSource = null;
+      let arToolkitContext = null;
+      let markerRoot = null;
+      let arCamera = null;
+
+      function startAR() {
+        arActive = true;
+        controls.enabled = false;
+        document.body.style.background = 'transparent';
+        document.getElementById('ar-status').style.display = 'block';
+        document.getElementById('ar-size-box').style.display = 'flex';
+        document.getElementById('btn-ar').textContent = '⏹ AR beenden';
+
+        arCamera = new THREE.Camera();
+        scene.add(arCamera);
+
+        arToolkitSource = new THREEx.ArToolkitSource({ sourceType: 'webcam' });
+        arToolkitSource.init(() => onARResize(), (err) => {
+          alert('Kamera-Zugriff fehlgeschlagen (HTTPS nötig): ' + err);
+          stopAR();
+        });
+
+        arToolkitContext = new THREEx.ArToolkitContext({
+          cameraParametersUrl: 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/data/data/camera_para.dat',
+          detectionMode: 'mono',
+        });
+        arToolkitContext.init(() => {
+          arCamera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+        });
+
+        markerRoot = new THREE.Group();
+        scene.add(markerRoot);
+        new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+          type: 'pattern',
+          patternUrl: './assets/patt.hiro',
+        });
+
+        scene.remove(worldGroup);
+        markerRoot.add(worldGroup);
+        worldGroup.scale.setScalar(ISLAND_SCALE * arSize);
+        worldGroup.position.set(0, 0.05, 0);
+        worldGroup.rotation.set(0, 0, 0);
+      }
+
+      function stopAR() {
+        arActive = false;
+        if (arToolkitSource && arToolkitSource.domElement && arToolkitSource.domElement.srcObject) {
+          arToolkitSource.domElement.srcObject.getTracks().forEach((t) => t.stop());
+        }
+        if (arToolkitSource && arToolkitSource.domElement && arToolkitSource.domElement.parentNode) {
+          arToolkitSource.domElement.parentNode.removeChild(arToolkitSource.domElement);
+        }
+        if (markerRoot) {
+          markerRoot.remove(worldGroup);
+          scene.remove(markerRoot);
+          markerRoot = null;
+        }
+        if (arCamera) {
+          scene.remove(arCamera);
+          arCamera = null;
+        }
+        scene.add(worldGroup);
+        worldGroup.scale.setScalar(ISLAND_SCALE);
+        worldGroup.position.set(0, 0, 0);
+        worldGroup.rotation.set(0, 0, 0);
+        controls.enabled = true;
+        document.body.style.background = 'radial-gradient(circle at 50% 25%, #172542 0%, var(--bg) 72%)';
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('ar-status').style.display = 'none';
+        document.getElementById('ar-size-box').style.display = 'none';
+        document.getElementById('btn-ar').textContent = '📱 AR starten';
+      }
+
+      function onARResize() {
+        if (!arToolkitSource || !arToolkitSource.ready) return;
+        arToolkitSource.onResizeElement();
+        arToolkitSource.copyElementSizeTo(renderer.domElement);
+        if (arToolkitContext && arToolkitContext.arController) {
+          arToolkitSource.copyElementSizeTo(arToolkitContext.arController.canvas);
+        }
+      }
+
+      // Touch gestures in AR mode: 1-finger rotate, 2-finger pinch zoom
+      let lastX = 0, lastY = 0, lastPinch = 0;
+      renderer.domElement.addEventListener('touchstart', (e) => {
+        if (!arActive) return;
+        if (e.touches.length === 1) {
+          lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          lastPinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        }
+      }, { passive: true });
+      renderer.domElement.addEventListener('touchmove', (e) => {
+        if (!arActive) return;
+        if (e.touches.length === 1) {
+          worldGroup.rotation.y += (e.touches[0].clientX - lastX) * 0.01;
+          worldGroup.rotation.x += (e.touches[0].clientY - lastY) * 0.008;
+          lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+        } else if (e.touches.length === 2 && lastPinch > 0) {
+          const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          arSize = Math.max(0.6, Math.min(4.5, arSize * (d / lastPinch)));
+          worldGroup.scale.setScalar(ISLAND_SCALE * arSize);
+          document.getElementById('ar-size-slider').value = arSize.toFixed(1);
+          lastPinch = d;
+        }
+      }, { passive: true });
+
+      // UI listeners
+      document.getElementById('btn-ar').onclick = () => { if (arActive) stopAR(); else startAR(); };
+      document.getElementById('ar-size-slider').oninput = (e) => {
+        arSize = parseFloat(e.target.value);
+        if (arActive) worldGroup.scale.setScalar(ISLAND_SCALE * arSize);
+      };
+      document.getElementById('btn-play').onclick = (e) => {
+        playing = !playing;
+        e.target.textContent = playing ? '⏸ Pause' : '▶ Weiter';
+      };
+      document.querySelectorAll('.speed-btn').forEach((btn) => {
+        btn.onclick = () => {
+          document.querySelectorAll('.speed-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          speedMult = parseInt(btn.getAttribute('data-spd'), 10) || 30;
+        };
+      });
+      document.getElementById('scrub-slider').oninput = (e) => {
+        simTime = (parseFloat(e.target.value) / 1000) * totalDuration;
+        updateShootingStar(simTime);
+      };
+
+      window.addEventListener('resize', () => {
+        if (arActive) onARResize();
+        else {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+
+      let lastFrameMs = performance.now();
+      function animate(nowMs) {
+        requestAnimationFrame(animate);
+        const dt = Math.min(0.1, (nowMs - lastFrameMs) / 1000);
+        lastFrameMs = nowMs;
+
+        if (ridePoints.length) {
+          if (playing) {
+            simTime += dt * speedMult;
+            if (simTime > totalDuration) simTime = 0;
+          }
+          updateShootingStar(simTime);
+        }
+
+        if (arActive) {
+          if (arToolkitSource && arToolkitSource.ready && arToolkitContext) {
+            arToolkitContext.update(arToolkitSource.domElement);
+          }
+          if (markerRoot) {
+            const st = document.getElementById('ar-status');
+            if (markerRoot.visible) {
+              st.classList.add('found');
+              st.textContent = '✅ HIRO-Marker erkannt!';
+            } else {
+              st.classList.remove('found');
+              st.textContent = 'Auf HIRO-Marker richten...';
+            }
+          }
+          renderer.render(scene, arCamera);
+        } else {
+          controls.update();
+          renderer.render(scene, camera);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+</html>
