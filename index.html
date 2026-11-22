@@ -153,6 +153,7 @@
     <div class="top-actions">
       <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
       <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
+      <button id="btn-ocean" type="button" class="active" title="Ozean-Fade ein-/ausblenden">🌊 Ozean</button>
       <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
       <button id="btn-ar" type="button">📱 AR starten</button>
     </div>
@@ -328,19 +329,58 @@
 
       let islandLoaded = false;
       let rideLoaded = false;
+      let oceanMeshRef = null;
       function checkReady() {
         if (islandLoaded && rideLoaded) {
           document.getElementById('loading-badge').style.display = 'none';
         }
       }
 
+      function createRadialFadeOceanMaterial() {
+        return new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+          uniforms: {
+            uShallow: { value: new THREE.Color(0x0ea5e9) },
+            uDeep: { value: new THREE.Color(0x082f49) },
+          },
+          vertexShader: `
+            varying vec2 vXZ;
+            void main() {
+              vXZ = position.xz;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 uShallow;
+            uniform vec3 uDeep;
+            varying vec2 vXZ;
+            void main() {
+              float r = length(vXZ);
+              float fade = 1.0 - smoothstep(500.0, 740.0, r);
+              if (fade <= 0.005) discard;
+              float depthT = smoothstep(320.0, 680.0, r);
+              vec3 col = mix(uShallow, uDeep, depthT);
+              gl_FragColor = vec4(col, fade * 0.82);
+            }
+          `,
+        });
+      }
+
       gltfLoader.load(
         './models/fantasy_island.glb',
         (gltf) => {
           gltf.scene.traverse((ch) => {
-            if (ch.isMesh && ch.material) {
-              const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
-              mats.forEach((m) => { m.side = THREE.DoubleSide; });
+            if (ch.isMesh) {
+              const nm = (ch.name || '').toLowerCase();
+              if (nm.includes('ocean')) {
+                ch.material = createRadialFadeOceanMaterial();
+                oceanMeshRef = ch;
+              } else if (ch.material) {
+                const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+                mats.forEach((m) => { m.side = THREE.DoubleSide; });
+              }
             }
           });
           worldGroup.add(gltf.scene);
@@ -586,6 +626,12 @@
       }, { passive: true });
 
       // UI listeners
+      document.getElementById('btn-ocean').onclick = (e) => {
+        if (!oceanMeshRef) return;
+        oceanMeshRef.visible = !oceanMeshRef.visible;
+        e.target.classList.toggle('active', oceanMeshRef.visible);
+        e.target.textContent = oceanMeshRef.visible ? '🌊 Ozean' : '🌊 Ozean: Aus';
+      };
       document.getElementById('btn-ar').onclick = () => { if (arActive) stopAR(); else startAR(); };
       document.getElementById('ar-size-slider').oninput = (e) => {
         arSize = parseFloat(e.target.value);
