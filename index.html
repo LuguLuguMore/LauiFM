@@ -157,6 +157,7 @@
         <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
         <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
         <button id="btn-ocean" type="button" class="active" title="Ozean-Fade ein-/ausblenden">🌊 Ozean</button>
+        <button id="btn-pivot" type="button" class="active" title="Drehpunkt zwischen Sternschnuppe und ganzer Insel umschalten">✨ Fokus: Stern</button>
         <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
         <button id="btn-ar" type="button">📱 AR starten</button>
       </div>
@@ -654,6 +655,20 @@
       }, { passive: true });
 
       // UI listeners
+      let pivotOnStar = true;
+      const _starWorldPos = new THREE.Vector3();
+      const _pivotPrevTarget = new THREE.Vector3();
+      const _pivotDelta = new THREE.Vector3();
+
+      document.getElementById('btn-pivot').onclick = (e) => {
+        pivotOnStar = !pivotOnStar;
+        e.target.classList.toggle('active', pivotOnStar);
+        e.target.textContent = pivotOnStar ? '✨ Fokus: Stern' : '🏝️ Fokus: Insel';
+        if (!pivotOnStar && !arActive) {
+          controls.target.set(0, 0.08, 0);
+          controls.update();
+        }
+      };
       document.getElementById('btn-ocean').onclick = (e) => {
         if (!oceanMeshRef) return;
         oceanMeshRef.visible = !oceanMeshRef.visible;
@@ -720,6 +735,13 @@
           }
           renderer.render(scene, arCamera);
         } else {
+          if (pivotOnStar && ridePoints.length) {
+            starHeadGroup.getWorldPosition(_starWorldPos);
+            _pivotPrevTarget.copy(controls.target);
+            controls.target.lerp(_starWorldPos, Math.min(1, dt * 8.0));
+            _pivotDelta.subVectors(controls.target, _pivotPrevTarget);
+            camera.position.add(_pivotDelta);
+          }
           controls.update();
           renderer.render(scene, camera);
         }
