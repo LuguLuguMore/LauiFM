@@ -315,6 +315,40 @@
       font-weight: 800;
       text-align: center;
     }
+
+    #callout-banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(242, 244, 118, 0.45);
+      border-radius: 10px;
+      padding: 6px 10px;
+      max-width: 680px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+      pointer-events: auto;
+    }
+
+    #callout-banner.visible { display: flex; }
+
+    #callout-tag {
+      flex-shrink: 0;
+      font-size: 10px;
+      font-weight: 900;
+      color: #0f172a;
+      background: var(--yellow);
+      padding: 3px 7px;
+      border-radius: 5px;
+    }
+
+    #callout-text {
+      font-size: 11.5px;
+      line-height: 1.35;
+      color: #f8fafc;
+      font-weight: 600;
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
@@ -340,8 +374,11 @@
       <div class="top-actions">
         <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
         <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
+        <button type="button" onclick="window.LauiFM && window.LauiFM.spot()" title="Nachrichten / Werbung abspielen">📰 Spot</button>
+        <button type="button" onclick="window.LauiFM && window.LauiFM.teamfunk()" title="Teamfunkspruch absetzen">🎙️ Teamfunk</button>
         <button id="btn-ocean" type="button" class="active" title="Ozean-Fade ein-/ausblenden">🌊 Ozean</button>
-        <button id="btn-pivot" type="button" class="active" title="Drehpunkt zwischen Sternschnuppe und ganzer Insel umschalten">✨ Fokus: Stern</button>
+        <button id="btn-pivot" type="button" class="active"
+          title="Drehpunkt zwischen Sternschnuppe und ganzer Insel umschalten">✨ Fokus: Stern</button>
         <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
         <button id="btn-ar" type="button">📱 AR starten</button>
       </div>
@@ -368,6 +405,11 @@
         <div class="t-lbl">Distanz</div>
         <div class="t-val" id="val-dist">0.00 km</div>
       </div>
+    </div>
+
+    <div id="callout-banner">
+      <span id="callout-tag">🎙️ TEAMFUNK</span>
+      <span id="callout-text"></span>
     </div>
   </div>
 
@@ -484,6 +526,10 @@
       let simTime = 0;
       let playing = true;
       let speedMult = 30;
+      let lastLiveTelem = { w: 164, hr: 135, spd: 28, alt: 40, dist: 0 };
+      if (window.LauiFM && typeof window.LauiFM.setTelemetryProvider === 'function') {
+        window.LauiFM.setTelemetryProvider(() => lastLiveTelem);
+      }
 
       const TAIL_STEPS = 88;
       const tailPos = new Float32Array((TAIL_STEPS + 1) * 2 * 3);
@@ -693,6 +739,7 @@
         headLight.color.setRGB(headCol[0], headCol[1], headCol[2]);
 
         // Update HUD
+        lastLiveTelem = { w: pt[4], hr: pt[5], spd: pt[7], alt: pt[2], dist: pt[8] };
         const wEl = document.getElementById('val-watt');
         wEl.textContent = `${pt[4]} W`;
         wEl.style.color = rgbCss(headCol);
