@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -15,121 +16,303 @@
       --yellow: #f2f476;
       --sky: #38bdf8;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%; height: 100%; overflow: hidden;
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background: radial-gradient(circle at 50% 25%, #172542 0%, var(--bg) 72%);
       color: var(--text);
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
-    canvas { position: fixed; inset: 0; z-index: 1; display: block; }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      display: block;
+    }
 
     /* Tour-de-France slanted top HUD (never overlaps) */
     #top-hud {
-      position: fixed; top: 8px; left: 8px; right: 8px; z-index: 30;
-      display: flex; flex-direction: column; gap: 6px;
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       pointer-events: none;
     }
+
     #topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
     }
+
     .tdf-banner {
       pointer-events: auto;
-      display: flex; align-items: center; gap: 10px;
-      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border); border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 6px 12px 6px 8px;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
     }
+
     .tdf-crest {
-      height: 36px; width: auto; background: #fff; border-radius: 7px; padding: 2px 4px;
+      height: 36px;
+      width: auto;
+      background: #fff;
+      border-radius: 7px;
+      padding: 2px 4px;
     }
+
     .tdf-tag {
-      background: var(--yellow); color: #0f172a; font-weight: 900; font-size: 11px;
-      letter-spacing: 0.7px; padding: 3px 8px; border-radius: 4px;
-      transform: skewX(-10deg); display: inline-block;
+      background: var(--yellow);
+      color: #0f172a;
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: 0.7px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      transform: skewX(-10deg);
+      display: inline-block;
     }
-    .tdf-tag span { display: inline-block; transform: skewX(10deg); }
-    .tdf-title { font-size: 13px; font-weight: 800; color: #fff; margin-top: 2px; }
-    .tdf-sub { font-size: 11px; color: var(--muted); }
+
+    .tdf-tag span {
+      display: inline-block;
+      transform: skewX(10deg);
+    }
+
+    .tdf-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 2px;
+    }
+
+    .tdf-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
     .top-actions {
       pointer-events: auto;
-      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
     }
-    button, .link-btn {
-      cursor: pointer; border: 1px solid var(--border);
-      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      color: var(--text); padding: 7px 10px; border-radius: 9px;
-      font-size: 11.5px; font-weight: 800; text-decoration: none;
-      display: inline-flex; align-items: center; gap: 5px;
+
+    button,
+    .link-btn {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       transition: transform 0.1s ease, filter 0.15s ease;
     }
-    button:hover, .link-btn:hover { filter: brightness(1.15); }
-    button:active { transform: scale(0.96); }
+
+    button:hover,
+    .link-btn:hover {
+      filter: brightness(1.15);
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
     #btn-radio.active {
       background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #052e16; border-color: #4ade80;
+      color: #052e16;
+      border-color: #4ade80;
     }
+
     #btn-ar {
       background: linear-gradient(135deg, #0ea5e9, #6366f1);
-      border-color: transparent; color: #fff;
+      border-color: transparent;
+      color: #fff;
       box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
     }
 
     /* Live Telemetry Strip */
     #telem-bar {
-      display: flex; gap: 5px; flex-wrap: wrap; pointer-events: none;
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      pointer-events: none;
     }
+
     .t-pill {
-      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border); border-radius: 9px;
-      padding: 4px 9px; min-width: 64px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 4px 9px;
+      min-width: 64px;
     }
-    .t-lbl { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .t-val { font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 1px; }
+
+    .t-lbl {
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .t-val {
+      font-size: 14px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
 
     /* Bottom Controls & Watt Legend */
     #bottombar {
-      position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 30;
-      display: flex; flex-direction: column; gap: 7px; pointer-events: none;
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      pointer-events: none;
     }
+
     .bottom-row {
-      display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
     }
+
     .ctrl-card {
       pointer-events: auto;
-      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border); border-radius: 12px;
-      padding: 8px 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
-    .ctrl-card.full { width: 100%; justify-content: space-between; }
-    .scrub-wrap { flex: 1; min-width: 160px; display: flex; align-items: center; gap: 8px; }
-    input[type="range"] { width: 100%; accent-color: var(--yellow); cursor: pointer; }
-    .speed-btn { padding: 5px 8px; font-size: 11px; border-radius: 7px; }
-    .speed-btn.active { background: var(--yellow); color: #0f172a; border-color: var(--yellow); }
+
+    .ctrl-card.full {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .scrub-wrap {
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--yellow);
+      cursor: pointer;
+    }
+
+    .speed-btn {
+      padding: 5px 8px;
+      font-size: 11px;
+      border-radius: 7px;
+    }
+
+    .speed-btn.active {
+      background: var(--yellow);
+      color: #0f172a;
+      border-color: var(--yellow);
+    }
 
     .watt-legend {
       pointer-events: auto;
-      background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 6px 10px; font-size: 10px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 10px;
     }
+
     .watt-bar {
-      width: 170px; height: 7px; border-radius: 99px; margin: 4px 0 3px;
+      width: 170px;
+      height: 7px;
+      border-radius: 99px;
+      margin: 4px 0 3px;
       background: linear-gradient(90deg, #60a5fa, #38bdf8, #4ade80, #f2f476, #fb923c, #f43f5e);
     }
-    .watt-labels { display: flex; justify-content: space-between; color: var(--muted); font-weight: 700; }
+
+    .watt-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-weight: 700;
+    }
 
     #ar-status {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-      padding: 5px 10px; font-size: 11px; font-weight: 700; display: none;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      display: none;
     }
-    #ar-status.found { border-color: #22c55e; color: #86efac; }
+
+    #ar-status.found {
+      border-color: #22c55e;
+      color: #86efac;
+    }
+
     #loading-badge {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      z-index: 40; background: var(--panel); border: 1px solid var(--yellow);
-      border-radius: 14px; padding: 14px 20px; font-size: 14px; font-weight: 800;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 40;
+      background: var(--panel);
+      border: 1px solid var(--yellow);
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 800;
       text-align: center;
     }
   </style>
@@ -141,6 +324,7 @@
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/three.js/build/ar-threex.js"></script>
   <script src="./laui_fm.js"></script>
 </head>
+
 <body>
   <div id="loading-badge">🏝️ Lade VeloTopia V3 &amp; Tour-Strecke...</div>
 
@@ -164,11 +348,26 @@
     </div>
 
     <div id="telem-bar">
-      <div class="t-pill"><div class="t-lbl">Leistung</div><div class="t-val" id="val-watt" style="color:#f2f476;">0 W</div></div>
-      <div class="t-pill"><div class="t-lbl">Tempo</div><div class="t-val" id="val-spd" style="color:#38bdf8;">0.0 km/h</div></div>
-      <div class="t-pill"><div class="t-lbl">Puls</div><div class="t-val" id="val-hr" style="color:#fb7185;">-- bpm</div></div>
-      <div class="t-pill"><div class="t-lbl">Höhe</div><div class="t-val" id="val-alt" style="color:#8bd486;">4 m</div></div>
-      <div class="t-pill"><div class="t-lbl">Distanz</div><div class="t-val" id="val-dist">0.00 km</div></div>
+      <div class="t-pill">
+        <div class="t-lbl">Leistung</div>
+        <div class="t-val" id="val-watt" style="color:#f2f476;">0 W</div>
+      </div>
+      <div class="t-pill">
+        <div class="t-lbl">Tempo</div>
+        <div class="t-val" id="val-spd" style="color:#38bdf8;">0.0 km/h</div>
+      </div>
+      <div class="t-pill">
+        <div class="t-lbl">Puls</div>
+        <div class="t-val" id="val-hr" style="color:#fb7185;">-- bpm</div>
+      </div>
+      <div class="t-pill">
+        <div class="t-lbl">Höhe</div>
+        <div class="t-val" id="val-alt" style="color:#8bd486;">4 m</div>
+      </div>
+      <div class="t-pill">
+        <div class="t-lbl">Distanz</div>
+        <div class="t-val" id="val-dist">0.00 km</div>
+      </div>
     </div>
   </div>
 
@@ -197,7 +396,9 @@
       </div>
       <div class="scrub-wrap">
         <input id="scrub-slider" type="range" min="0" max="1000" value="0" />
-        <span id="time-label" style="font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; min-width:86px; text-align:right;">00:00 / 61:29</span>
+        <span id="time-label"
+          style="font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; min-width:86px; text-align:right;">00:00
+          / 61:29</span>
       </div>
     </div>
   </div>
@@ -209,7 +410,7 @@
       // Watt -> Tour-de-France / Coggan RGB color
       function wattToColor(w) {
         const stops = [
-          [90,  0x60 / 255, 0xa5 / 255, 0xfa / 255],  // Z1 Blue
+          [90, 0x60 / 255, 0xa5 / 255, 0xfa / 255],  // Z1 Blue
           [150, 0x38 / 255, 0xbd / 255, 0xf8 / 255],  // Z2 Sky Cyan
           [195, 0x4a / 255, 0xde / 255, 0x80 / 255],  // Z3 Mint Green
           [235, 0xf2 / 255, 0xf4 / 255, 0x76 / 255],  // Z4 TdF Citron Yellow
@@ -363,11 +564,11 @@
             varying vec2 vXZ;
             void main() {
               float r = length(vXZ);
-              float fade = 1.0 - smoothstep(500.0, 740.0, r);
+              float fade = 1.0 - smoothstep(740.0, 1080.0, r);
               if (fade <= 0.005) discard;
-              float depthT = smoothstep(320.0, 680.0, r);
+              float depthT = smoothstep(460.0, 960.0, r);
               vec3 col = mix(uShallow, uDeep, depthT);
-              gl_FragColor = vec4(col, fade * 0.82);
+              gl_FragColor = vec4(col, fade * 0.85);
             }
           `,
         });
@@ -385,7 +586,7 @@
             .replace(
               '#include <dithering_fragment>',
               `float coastDist = length(vIslandLocalPos.xz);
-               float coastAlpha = 1.0 - smoothstep(545.0, 625.0, coastDist);
+               float coastAlpha = 1.0 - smoothstep(760.0, 900.0, coastDist);
                if (coastAlpha <= 0.01) discard;
                gl_FragColor.a *= coastAlpha;
                #include <dithering_fragment>`
@@ -522,7 +723,7 @@
           const yLift = s[2] + 3.8;
 
           const vIdx = k * 2 * 3;
-          tailPos[vIdx]     = s[1] + px * halfW;
+          tailPos[vIdx] = s[1] + px * halfW;
           tailPos[vIdx + 1] = yLift;
           tailPos[vIdx + 2] = s[3] + pz * halfW;
           tailPos[vIdx + 3] = s[1] - px * halfW;
@@ -751,4 +952,5 @@
     })();
   </script>
 </body>
+
 </html>
