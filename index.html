@@ -24,11 +24,14 @@
     }
     canvas { position: fixed; inset: 0; z-index: 1; display: block; }
 
-    /* Tour-de-France slanted top banner */
-    #topbar {
-      position: fixed; top: 10px; left: 10px; right: 10px; z-index: 30;
-      display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    /* Tour-de-France slanted top HUD (never overlaps) */
+    #top-hud {
+      position: fixed; top: 8px; left: 8px; right: 8px; z-index: 30;
+      display: flex; flex-direction: column; gap: 6px;
       pointer-events: none;
+    }
+    #topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap;
     }
     .tdf-banner {
       pointer-events: auto;
@@ -52,13 +55,13 @@
 
     .top-actions {
       pointer-events: auto;
-      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
     }
     button, .link-btn {
       cursor: pointer; border: 1px solid var(--border);
       background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      color: var(--text); padding: 8px 12px; border-radius: 10px;
-      font-size: 12px; font-weight: 800; text-decoration: none;
+      color: var(--text); padding: 7px 10px; border-radius: 9px;
+      font-size: 11.5px; font-weight: 800; text-decoration: none;
       display: inline-flex; align-items: center; gap: 5px;
       transition: transform 0.1s ease, filter 0.15s ease;
     }
@@ -76,16 +79,15 @@
 
     /* Live Telemetry Strip */
     #telem-bar {
-      position: fixed; top: 68px; left: 10px; z-index: 28;
-      display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none;
+      display: flex; gap: 5px; flex-wrap: wrap; pointer-events: none;
     }
     .t-pill {
       background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--border); border-radius: 10px;
-      padding: 5px 10px; min-width: 72px;
+      border: 1px solid var(--border); border-radius: 9px;
+      padding: 4px 9px; min-width: 64px;
     }
-    .t-lbl { font-size: 9.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-    .t-val { font-size: 16px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 1px; }
+    .t-lbl { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .t-val { font-size: 14px; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 1px; }
 
     /* Bottom Controls & Watt Legend */
     #bottombar {
@@ -142,29 +144,31 @@
 <body>
   <div id="loading-badge">🏝️ Lade VeloTopia V3 &amp; Tour-Strecke...</div>
 
-  <div id="topbar">
-    <div class="tdf-banner">
-      <img class="tdf-crest" src="./assets/logo_crest.png" alt="LAUI 26" />
-      <div>
-        <div class="tdf-tag"><span>PARCOURS • VELOTOPIA V3 • 22.4 KM</span></div>
-        <div class="tdf-title" id="radio-track">LAUI FM 104.8 bereit — tippe zum Starten</div>
+  <div id="top-hud">
+    <div id="topbar">
+      <div class="tdf-banner">
+        <img class="tdf-crest" src="./assets/logo_crest.png" alt="LAUI 26" />
+        <div>
+          <div class="tdf-tag"><span>PARCOURS • VELOTOPIA V3 • 22.4 KM</span></div>
+          <div class="tdf-title" id="radio-track">LAUI FM 104.8 bereit — tippe zum Starten</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
+        <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
+        <button id="btn-ocean" type="button" class="active" title="Ozean-Fade ein-/ausblenden">🌊 Ozean</button>
+        <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
+        <button id="btn-ar" type="button">📱 AR starten</button>
       </div>
     </div>
-    <div class="top-actions">
-      <button id="btn-radio" type="button" onclick="window.LauiFM && window.LauiFM.toggle()">📻 LAUI FM 104.8</button>
-      <button type="button" onclick="window.LauiFM && window.LauiFM.next()" title="Nächster Song">⏭️</button>
-      <button id="btn-ocean" type="button" class="active" title="Ozean-Fade ein-/ausblenden">🌊 Ozean</button>
-      <a class="link-btn" href="./print_ar_sheet.html" title="AR-Marker & QR-Blatt drucken">🖨️ AR-Blatt</a>
-      <button id="btn-ar" type="button">📱 AR starten</button>
-    </div>
-  </div>
 
-  <div id="telem-bar">
-    <div class="t-pill"><div class="t-lbl">Leistung</div><div class="t-val" id="val-watt" style="color:#f2f476;">0 W</div></div>
-    <div class="t-pill"><div class="t-lbl">Tempo</div><div class="t-val" id="val-spd" style="color:#38bdf8;">0.0 km/h</div></div>
-    <div class="t-pill"><div class="t-lbl">Puls</div><div class="t-val" id="val-hr" style="color:#fb7185;">-- bpm</div></div>
-    <div class="t-pill"><div class="t-lbl">Höhe</div><div class="t-val" id="val-alt" style="color:#8bd486;">4 m</div></div>
-    <div class="t-pill"><div class="t-lbl">Distanz</div><div class="t-val" id="val-dist">0.00 km</div></div>
+    <div id="telem-bar">
+      <div class="t-pill"><div class="t-lbl">Leistung</div><div class="t-val" id="val-watt" style="color:#f2f476;">0 W</div></div>
+      <div class="t-pill"><div class="t-lbl">Tempo</div><div class="t-val" id="val-spd" style="color:#38bdf8;">0.0 km/h</div></div>
+      <div class="t-pill"><div class="t-lbl">Puls</div><div class="t-val" id="val-hr" style="color:#fb7185;">-- bpm</div></div>
+      <div class="t-pill"><div class="t-lbl">Höhe</div><div class="t-val" id="val-alt" style="color:#8bd486;">4 m</div></div>
+      <div class="t-pill"><div class="t-lbl">Distanz</div><div class="t-val" id="val-dist">0.00 km</div></div>
+    </div>
   </div>
 
   <div id="bottombar">
@@ -368,6 +372,27 @@
         });
       }
 
+      function applyTerrainEdgeFade(mat) {
+        mat.transparent = true;
+        mat.side = THREE.DoubleSide;
+        mat.onBeforeCompile = (shader) => {
+          shader.vertexShader = shader.vertexShader
+            .replace('#include <common>', '#include <common>\nvarying vec3 vIslandLocalPos;')
+            .replace('#include <begin_vertex>', '#include <begin_vertex>\nvIslandLocalPos = position;');
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>', '#include <common>\nvarying vec3 vIslandLocalPos;')
+            .replace(
+              '#include <dithering_fragment>',
+              `float coastDist = length(vIslandLocalPos.xz);
+               float coastAlpha = 1.0 - smoothstep(545.0, 625.0, coastDist);
+               if (coastAlpha <= 0.01) discard;
+               gl_FragColor.a *= coastAlpha;
+               #include <dithering_fragment>`
+            );
+        };
+        mat.needsUpdate = true;
+      }
+
       gltfLoader.load(
         './models/fantasy_island.glb',
         (gltf) => {
@@ -377,6 +402,9 @@
               if (nm.includes('ocean')) {
                 ch.material = createRadialFadeOceanMaterial();
                 oceanMeshRef = ch;
+              } else if (nm.includes('terrain') && ch.material) {
+                const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+                mats.forEach(applyTerrainEdgeFade);
               } else if (ch.material) {
                 const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
                 mats.forEach((m) => { m.side = THREE.DoubleSide; });
